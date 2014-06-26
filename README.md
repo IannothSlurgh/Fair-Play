@@ -28,7 +28,7 @@ No. No case sensitivity.
 
 Platform and Compilation Details
 
-Fair Play was written in C++ on Windows 7 for Windows operating systems. It has been compiled on the MinGW port of gcc with the following line: 
+Fair Play was written in C++ on Windows 7 for Windows operating systems. The current stable version (1.0) has been compiled on the MinGW port of gcc with the following line: 
 
 g++ main.cpp gui.cpp playfair.cpp options.cpp cipher.cpp encoder.cpp decoder.cpp digraph.cpp
  -mwindows -O3 -o playfair.exe -static-libstdc++ -static-libgcc
