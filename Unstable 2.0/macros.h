@@ -22,5 +22,16 @@
 //gui2 messagebox macros
 
 #define HAVE_NOT_SAVED "You have not saved your current file. Do you want to save it?"
+#define IDD_CONFIG_CIPHER 101
+#define CHILD_APPLY 8986
+#define CHILD_MODE_BOX 8987
+#define CHILD_TEXT_IGNORE 8988
+#define CHILD_TEXT_KEYWORD 8989
+#define CHILD_TEXT_DECODING 8990
+#define CHILD_TEXT_ENCODING 8991
+#define CHILD_ENCODING 8992
+#define CHILD_DECODING 8993
+#define CHILD_KEYWORD 8994
+#define CHILD_IGNORE 8995
 
 #endif

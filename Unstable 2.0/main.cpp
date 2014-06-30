@@ -13,7 +13,8 @@ using namespace std;
 int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE previnstance, LPSTR lpcmdlin, int ncmdshow)
 {
 	//Clean, empty state.
-	has_saved=has_opened=discard=source_filename=dest_filename=precipher=postcipher=keyword=ignore=mode=0;
+	has_saved=has_opened=discard=source_filename=dest_filename=precipher=postcipher=keyword=0;
+	ignore=mode=0;
 	//Register Main window class.
 	reg_main(app_instance);
 	//Open main window

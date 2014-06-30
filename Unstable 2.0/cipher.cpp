@@ -10,7 +10,7 @@ cipher::cipher(char ignore, char * keyword) //Dynamic memory to matrix. Fill wit
 		matrix[c]=new char[5];
 	used_alpha[ignore]=true; //Must not enter matrix.
 	mat_keyword((&rc_pair),keyword);
-	char * alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	const char * alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	mat_keyword(&rc_pair, alpha); //Fill matrix with remaining capital letters.
 	delete[] rc_pair;
 	if(ignore=='z'||ignore=='Z') //Set the uncommon letter for special cases.
@@ -39,7 +39,7 @@ cipher::~cipher()
 	delete[] matrix;
 }
 
-void cipher::mat_keyword(int ** rc_pair, char * keyword) //Adds keyword components into matrix.
+void cipher::mat_keyword(int ** rc_pair, const char * keyword) //Adds keyword components into matrix.
 {
 	int size = strlen(keyword);
 	for(int i = 0;i<size;++i)

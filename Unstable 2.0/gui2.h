@@ -12,8 +12,8 @@
 #define SEND_MESSAGE 9003
 #define RECEIVE_MESSAGE 9004
 #define EXIT_MESSAGE 9005
-#define MODE_MESSAGE 9006
-#define KEYWORD_MESSAGE 9007
+#define CONFIG_CIPHER_MESSAGE 9006
+#define CONFIG_NETWORKING_MESSAGE 9007
 #define ABOUT_MESSAGE 9008
 #define HELP_MESSAGE 9009
 
@@ -23,6 +23,9 @@ char * get_file_path(HWND main_wnd_instance, bool is_open);
 
 //Fair Play's main window's procedure.
 LRESULT CALLBACK main_procedure(HWND main_wnd_instance, UINT msg, WPARAM param_w, LPARAM param_l);
+
+//Rather unfinished procedure for a secondary window for settings (in which mode, ignore, etc could be set.)
+BOOL CALLBACK Playfair_Settings_Proc( HWND settings_instance, UINT Message, WPARAM param_w, LPARAM param_l );
 
 //Register the main window class.
 ATOM reg_main(HINSTANCE app_instance);

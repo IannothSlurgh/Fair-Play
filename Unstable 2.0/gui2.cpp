@@ -87,18 +87,20 @@ BOOL CALLBACK Playfair_Settings_Proc( HWND settings_instance, UINT Message, WPAR
 	switch( Message )
 	{
 		case WM_INITDIALOG:
-			return true;
+			return TRUE;
 		break;
 		case WM_COMMAND:
 			switch( LOWORD( param_w ) )
 			{
-			
+				case IDOK:
+					EndDialog(settings_instance, IDOK);
+				break;
 			}
 		break;
 		default:
-			return false;
+			return FALSE;
 	}
-	return true;
+	return TRUE;
 } 
 
 //Standard windows OS message loop.
@@ -130,6 +132,10 @@ LRESULT CALLBACK main_procedure( HWND main_wnd_instance, UINT msg, WPARAM param_
 			{
 				temp = MessageBox( main_wnd_instance, HAVE_NOT_SAVED, 
 				"Fair Play", MB_YESNOCANCEL );
+				DestroyWindow( main_wnd_instance );
+			}
+			else
+			{
 				DestroyWindow( main_wnd_instance );
 			}
 		}
@@ -200,10 +206,12 @@ LRESULT CALLBACK main_procedure( HWND main_wnd_instance, UINT msg, WPARAM param_
 					cout << path;
 					delete[] path;
 				}
-				case KEYWORD_MESSAGE:
+				break;
+				case CONFIG_CIPHER_MESSAGE:
 				{
-					
+					int return_value = DialogBox( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDD_CONFIG_CIPHER ), main_wnd_instance, (DLGPROC) Playfair_Settings_Proc );
 				}
+				break;
 				default:
 				break;
 			}
@@ -268,8 +276,7 @@ HMENU init_main_menu( HWND main_wnd_instance )
 	AppendMenu( submenu_file, MF_STRING, EXIT_MESSAGE, "E&xit" );
 	HMENU submenu_configure = CreatePopupMenu();
 	//Cipher options.
-	AppendMenu( submenu_configure, MF_STRING, MODE_MESSAGE, "&Mode" );
-	AppendMenu( submenu_configure, MF_STRING, KEYWORD_MESSAGE, "&Keyword" );
+	AppendMenu( submenu_configure, MF_STRING, CONFIG_CIPHER_MESSAGE, "&Cipher" );
 	HMENU submenu_help = CreatePopupMenu();
 	//User friendly section.
 	AppendMenu( submenu_help, MF_STRING, ABOUT_MESSAGE, "&About" );

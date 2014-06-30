@@ -16,7 +16,7 @@ class cipher //The base class from which encoder and decoder (and perhaps someda
 	cipher(char ignore, char * keyword);
 	char pick_uncommon(char c);
 	int * get_loc(char c); //Returns a rc_pair int[] of char's loc in matrix. int[] is dynamic. Delete it.
-	void mat_keyword(int ** rc_pair, char * keyword);
+	void mat_keyword(int ** rc_pair, const char * keyword);
 	public:
 	bool bounds_error;
 	~cipher();
