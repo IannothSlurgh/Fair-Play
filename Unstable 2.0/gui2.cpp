@@ -1,11 +1,13 @@
 #ifndef GUI2_GUARD
 #define GUI2_GUARD
 #include <iostream>
+#include <sstream>
 //#include <cstring>
 #include "gui2.h"
 
 //Declared in main.cpp
 extern bool has_saved, has_opened, discard;
+extern int precipher_size;
 extern char * source_filename, * dest_filename, * precipher, * postcipher, * keyword, ignore, mode;
 
 using namespace std;
@@ -59,18 +61,18 @@ bool get_precipher()
 	if(file != INVALID_HANDLE_VALUE)
 	{
 		//If file system was OK with request, check the file size.
-		DWORD file_size= GetFileSize( file, NULL );
-		if( file_size != 0xFFFFFFFF )
+		precipher_size= GetFileSize( file, NULL );
+		if( precipher_size != INVALID_FILE_SIZE )
 		{
 			//If the file is not too large, try and read in the pre-cipher text.
-			precipher= new (std::nothrow) char[ file_size + 1 ];
+			precipher= new (std::nothrow) char[ precipher_size + 1 ];
 			if( precipher != 0 )
 			{
 				//If there was enough memory, read in the data and cap it off with null terminator.
 				DWORD bytes_read;
-				if( ReadFile( file, precipher, file_size, &bytes_read, NULL ) )
+				if( ReadFile( file, precipher, precipher_size, &bytes_read, NULL ) )
 				{
-					precipher[ file_size ] = 0;
+					precipher[ precipher_size ] = 0;
 					success = true;
 				}
 			}
@@ -81,19 +83,208 @@ bool get_precipher()
 	return success;
 }
 
+char settings_possible_ignore( HWND settings_instance )
+{
+	char buffer_ignore[2];
+	//Len not including '/0'
+	int len_ignore = GetWindowText( GetDlgItem( settings_instance, CHILD_IGNORE ), buffer_ignore, 2 );
+	buffer_ignore[ 1 ] = 0;
+	char possible_ignore;
+	if( len_ignore == 0 )
+	{
+		possible_ignore = 0;
+	}
+	possible_ignore = toupper( buffer_ignore[ 0 ] );
+	return possible_ignore;
+}
+
+char settings_possible_mode( HWND settings_instance )
+{
+	char possible_mode;
+	if( PostMessage( GetDlgItem( settings_instance, CHILD_ENCODING ), BM_GETCHECK, 0, 0 ) == BST_CHECKED )
+	{
+		possible_mode = 'E';
+	}
+	else
+	{
+		possible_mode = 'D';
+	}
+	return possible_mode;
+}
+
+char * settings_possible_keyword( HWND settings_instance )
+{
+	char * possible_keyword;
+	char buffer_keyword[26];
+	//Len not including '/0'
+	int len_keyword = GetWindowText( GetDlgItem( settings_instance, CHILD_KEYWORD ), buffer_keyword, 26 );
+	buffer_keyword[ 25 ] = 0;
+	if( len_keyword != 0 )
+	{
+		possible_keyword = new char[ len_keyword + 1 ];
+		for( int i = 0; i < len_keyword; ++i )
+		{
+			possible_keyword[ i ] = toupper( buffer_keyword[ i ] );
+		}
+		possible_keyword[ len_keyword ] = 0;
+	}
+	else
+	{
+		possible_keyword = 0;
+	}
+	return possible_keyword;
+}
+
+void settings_error( HWND caller, int state )
+{
+	//if( state & MISSING_KEYWORD )
+	//{
+	//	MessageBox( caller, "Error", "Fair Play", MB_YESNOCANCEL );
+	//}
+	stringstream ss;
+	ss << state;
+	string blah;
+	ss >> blah;
+	MessageBox( caller, blah.c_str(), "Fair Play", MB_YESNOCANCEL );
+}
+
+void out_of_memory( HWND caller )
+{
+	MessageBox( caller, "Mem", "Fair Play", MB_YESNOCANCEL );
+}
+
+void settings_apply_button( HWND settings_instance )
+{
+	HWND main_wnd_instance = GetWindow( settings_instance, GW_OWNER );
+	char possible_ignore = settings_possible_ignore( settings_instance );
+	//Get the user input into format, options_win validator understands.
+	char possible_mode = settings_possible_mode( settings_instance );
+	char * possible_keyword = settings_possible_keyword( settings_instance );
+	char * empty_file = 0;
+	//Check options without major memory expenditure (without reference to the precipher).
+	options_win apply_validation( possible_mode, possible_keyword, empty_file, possible_ignore, 0 );
+	if( !apply_validation.bad )
+	{
+		//Try cipher on open-file.
+		if( has_opened )
+		{
+			precipher = new (std::nothrow) char[ precipher_size + 1 ];
+			//No memory overuse.
+			if( precipher != 0 )
+			{
+				//Get precipher into options.
+				GetWindowText( GetDlgItem( main_wnd_instance, CHILD_ORIGINAL ), precipher, precipher_size );
+				precipher[ precipher_size ] = 0;
+				apply_validation.set_file( precipher, precipher_size );
+				apply_validation.validate();
+				//Check ignore in the text
+				if( !apply_validation.bad )
+				{
+					playfair_win convert( apply_validation );
+					convert.execute();
+					if( convert.postcipher != 0 )
+					{
+						//Cipher was completely successful
+						SetWindowText( GetDlgItem( main_wnd_instance, CHILD_PREVIEW ), convert.postcipher );
+						EnableWindow( GetDlgItem( settings_instance, CHILD_APPLY ), FALSE );
+					}
+					else
+					{
+						out_of_memory( settings_instance );
+					}
+					//Even if memory ran short, the settings are good, make them default.
+					delete[] keyword;
+					keyword = possible_keyword;
+					ignore = possible_ignore;
+					mode = possible_mode;
+				}
+				else
+				{
+					settings_error( settings_instance, apply_validation.state );
+				}
+				delete[] precipher;
+				precipher = 0;
+			}
+			else
+			{
+				out_of_memory( settings_instance );
+			}
+		}
+		else
+		{
+			//Apply was successful, no file to use them on. Default settings set.
+			delete[] keyword;
+			ignore = possible_ignore;
+			mode = possible_mode;
+			keyword = possible_keyword;
+			EnableWindow( GetDlgItem( settings_instance, CHILD_APPLY ), FALSE );
+		}
+	}
+	else
+	{
+		settings_error( settings_instance, apply_validation.state );
+	}
+	if( possible_keyword != keyword )
+	{
+		delete[] possible_keyword;
+	}	
+}
+
 //Rather unfinished procedure for a secondary window for settings (in which mode, ignore, etc could be set.)
 BOOL CALLBACK Playfair_Settings_Proc( HWND settings_instance, UINT Message, WPARAM param_w, LPARAM param_l )
 {
 	switch( Message )
 	{
 		case WM_INITDIALOG:
+			//Repeated User controls
+			HWND handle_keyword;
+			HWND handle_ignore;
+			handle_keyword = GetDlgItem( settings_instance, CHILD_KEYWORD );
+			handle_ignore = GetDlgItem( settings_instance, CHILD_IGNORE );
+			//Remember last settings.
+			char c[2];
+			c[0]=ignore;
+			c[1]=0;
+			SetWindowText( handle_keyword, keyword );
+			SetWindowText( handle_ignore, c );
+			if(mode == 'E')
+			{
+				PostMessage( GetDlgItem( settings_instance, CHILD_ENCODING ), BM_SETCHECK, TRUE, 0 );
+			}
+			else
+			{
+				PostMessage( GetDlgItem( settings_instance, CHILD_DECODING ), BM_SETCHECK, TRUE, 0 );
+			}
+			//Prevent impossible keywords and ignores by length.
+			PostMessage(handle_keyword, EM_LIMITTEXT, 25, 0);
+			PostMessage(handle_ignore, EM_LIMITTEXT, 1, 0);
+			//Apply Changes button is disabled by default.
+			EnableWindow( GetDlgItem( settings_instance, CHILD_APPLY ), FALSE );
 			return TRUE;
+		break;
+		case WM_CLOSE:
+			EndDialog(settings_instance, IDOK);
 		break;
 		case WM_COMMAND:
 			switch( LOWORD( param_w ) )
 			{
 				case IDOK:
-					EndDialog(settings_instance, IDOK);
+						EndDialog(settings_instance, IDOK);
+				break;
+				case CHILD_APPLY:
+					settings_apply_button( settings_instance );
+				break;
+				case CHILD_KEYWORD:
+					if( HIWORD( param_w ) == EN_CHANGE )
+					{
+						EnableWindow( GetDlgItem( settings_instance, CHILD_APPLY ), TRUE );
+					}
+				break;
+				case CHILD_IGNORE:
+					if( HIWORD( param_w ) == EN_CHANGE )
+					{
+						EnableWindow( GetDlgItem( settings_instance, CHILD_APPLY ), TRUE );
+					}
 				break;
 			}
 		break;
@@ -182,10 +373,10 @@ LRESULT CALLBACK main_procedure( HWND main_wnd_instance, UINT msg, WPARAM param_
 							CHILD_ORIGINAL ), precipher );
 						}
 						delete[] source_filename;
-						source_filename=0;
+						source_filename = 0;
 						delete[] precipher;
-						precipher=0;
-						has_opened=true;
+						precipher = 0;
+						has_opened = true;
 						has_saved=discard=false;
 					}
 				}

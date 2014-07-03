@@ -5,6 +5,8 @@
 //discard- user decided to discard changes.
 bool has_saved, has_opened, discard;
 
+int precipher_size;
+
 //mode- D for decode, E for Encode
 char * source_filename, * dest_filename, * precipher, * postcipher, * keyword, ignore, mode;
 
@@ -13,8 +15,18 @@ using namespace std;
 int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE previnstance, LPSTR lpcmdlin, int ncmdshow)
 {
 	//Clean, empty state.
-	has_saved=has_opened=discard=source_filename=dest_filename=precipher=postcipher=keyword=0;
-	ignore=mode=0;
+	has_saved=has_opened=discard=source_filename=dest_filename=precipher=postcipher;
+	ignore = 'Z';
+	mode = 'E';
+	keyword = new char[ 8 ];
+	keyword[ 0 ] = 'H';
+	keyword[ 1 ] = 'E';
+	keyword[ 2 ] = 'X';
+	keyword[ 3 ] = 'A';
+	keyword[ 4 ] = 'P';
+	keyword[ 5 ] = 'U';
+	keyword[ 6 ] = 'S';
+	keyword[ 7 ] = 0;
 	//Register Main window class.
 	reg_main(app_instance);
 	//Open main window
@@ -29,5 +41,6 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE previnstance, LPSTR lpcmdli
 	if(GetLastError()==0)
 		message_loop();
 	cout<<GetLastError();
+	delete[] keyword;
 	return 0;
 }

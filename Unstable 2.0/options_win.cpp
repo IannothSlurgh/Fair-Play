@@ -87,6 +87,13 @@ bool options_win::is_missing_field()
 	return ( err_temp != 0 );
 }
 
+//Added so that programs can validate options without reference to the file, but do that later.
+void options_win::set_file( char * & input_file, int input_file_size )
+{
+	file = &input_file;
+	file_size = input_file_size;
+}
+
 //Check is the settings are valid.
 void options_win::validate()
 {
@@ -108,6 +115,11 @@ void options_win::validate()
 	else
 	{
 		state |= NONALPHA_KEYWORD;
+	}
+	//Ignored character must be a letter.
+	if( ! isalpha( ignore ) )
+	{
+		state |= NONALPHA_IGNORE;
 	}
 	//Keyword must not contain the ignored letter.
 	if( ignore_in_string( keyword ) )

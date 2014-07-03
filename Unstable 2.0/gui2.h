@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "macros.h"
+#include "playfair_win.h"
 
 #define CHILD_ORIGINAL_STATIC 8996
 #define CHILD_PREVIEW_STATIC 8997
