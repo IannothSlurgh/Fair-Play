@@ -42,5 +42,10 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE previnstance, LPSTR lpcmdli
 		message_loop();
 	cout<<GetLastError();
 	delete[] keyword;
+	if(dest_filename != 0)
+	{
+		delete[] dest_filename;
+		dest_filename = 0;
+	}
 	return 0;
 }

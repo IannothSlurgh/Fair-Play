@@ -154,6 +154,7 @@ void playfair_win::transmit_nonalpha() //Straightforward copy-paste of non alpha
 	}
 	char * c_dynam = new char[ counter + 1 ];
 	strcpy( c_dynam, c );
+	c_dynam[ counter ] = 0;
 	digraph d;
 	d.intervening = c_dynam;
 	d.bad = false;

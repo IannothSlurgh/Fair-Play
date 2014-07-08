@@ -16,9 +16,11 @@ using namespace std;
 //Warning!!!!: Dynamic array returned, delete[] it.
 char * get_file_path( HWND main_wnd_instance, bool is_open )
 {
+	bool success;
+	char * c = 0;
 	char filename[ MAX_PATH ]="";
 	OPENFILENAME file;
-	ZeroMemory( &file, sizeof(file) );
+	ZeroMemory( &file, sizeof( file ) );
 	file.lStructSize = sizeof( OPENFILENAME );
 	file.hwndOwner = main_wnd_instance;
 	//The filter which shows .txt files versus all files.
@@ -32,17 +34,20 @@ char * get_file_path( HWND main_wnd_instance, bool is_open )
 	//Choose between a save or an open explorer.
 	if( is_open )
 	{
-		GetOpenFileName( &file );
+		success = GetOpenFileName( &file );
 	}
 	else
 	{
-		GetSaveFileName( &file );
+		success = GetSaveFileName( &file );
 	}
 	int size = strlen( filename );
-	//This must be cleared later.
-	char * c = new char[ size + 1 ];
-	//Get filename from explorer and return the result.
-	strcpy( c, filename );
+	if(success)
+	{
+		//This must be cleared later.
+		c = new char[ size + 1 ];
+		//Get filename from explorer and return the result.
+		strcpy( c, filename );
+	}
 	return c;
 }
 
@@ -83,6 +88,38 @@ bool get_precipher()
 	return success;
 }
 
+bool get_postcipher( HWND preview_box )
+{
+	int len_postcipher = GetWindowTextLength( preview_box );
+	postcipher = new char[ len_postcipher + 1 ];
+	GetWindowText( preview_box, postcipher, len_postcipher );
+	postcipher[ len_postcipher ] = 0;
+	return true;
+}
+
+bool write_file( HWND main_wnd_instance )
+{
+	HWND preview_box = GetDlgItem( main_wnd_instance, CHILD_PREVIEW );
+	HANDLE file = CreateFile( dest_filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+	bool success = false;
+	if( file != INVALID_HANDLE_VALUE )
+	{
+		if( get_postcipher( preview_box ) )
+		{
+			int len_postcipher = strlen( postcipher );
+			DWORD len_written;
+			if( WriteFile( file, postcipher, len_postcipher, &len_written, NULL ) )
+			{
+				success = true;
+			}
+			delete[] postcipher;
+			postcipher = 0;
+		}
+	}
+	CloseHandle( file );
+	return success;
+}
+
 char settings_possible_ignore( HWND settings_instance )
 {
 	char buffer_ignore[2];
@@ -101,7 +138,7 @@ char settings_possible_ignore( HWND settings_instance )
 char settings_possible_mode( HWND settings_instance )
 {
 	char possible_mode;
-	if( PostMessage( GetDlgItem( settings_instance, CHILD_ENCODING ), BM_GETCHECK, 0, 0 ) == BST_CHECKED )
+	if( IsDlgButtonChecked( settings_instance, CHILD_ENCODING ) == BST_CHECKED )
 	{
 		possible_mode = 'E';
 	}
@@ -150,7 +187,7 @@ void settings_error( HWND caller, int state )
 
 void out_of_memory( HWND caller )
 {
-	MessageBox( caller, "Mem", "Fair Play", MB_YESNOCANCEL );
+	MessageBox( caller, "Memory Crisis", "Error", MB_OK | MB_ICONERROR );
 }
 
 void settings_apply_button( HWND settings_instance )
@@ -187,6 +224,7 @@ void settings_apply_button( HWND settings_instance )
 						//Cipher was completely successful
 						SetWindowText( GetDlgItem( main_wnd_instance, CHILD_PREVIEW ), convert.postcipher );
 						EnableWindow( GetDlgItem( settings_instance, CHILD_APPLY ), FALSE );
+						has_saved = false;
 					}
 					else
 					{
@@ -274,17 +312,19 @@ BOOL CALLBACK Playfair_Settings_Proc( HWND settings_instance, UINT Message, WPAR
 				case CHILD_APPLY:
 					settings_apply_button( settings_instance );
 				break;
-				case CHILD_KEYWORD:
-					if( HIWORD( param_w ) == EN_CHANGE )
-					{
-						EnableWindow( GetDlgItem( settings_instance, CHILD_APPLY ), TRUE );
-					}
-				break;
 				case CHILD_IGNORE:
-					if( HIWORD( param_w ) == EN_CHANGE )
-					{
-						EnableWindow( GetDlgItem( settings_instance, CHILD_APPLY ), TRUE );
-					}
+					case CHILD_KEYWORD:
+						if( HIWORD( param_w ) == EN_CHANGE )
+						{
+							EnableWindow( GetDlgItem( settings_instance, CHILD_APPLY ), TRUE );
+						}
+				break;
+				case CHILD_DECODING:
+					case CHILD_ENCODING:
+						if( HIWORD( param_w ) == BN_CLICKED )
+						{
+							EnableWindow( GetDlgItem( settings_instance, CHILD_APPLY ), TRUE );
+						}
 				break;
 			}
 		break;
@@ -323,7 +363,26 @@ LRESULT CALLBACK main_procedure( HWND main_wnd_instance, UINT msg, WPARAM param_
 			{
 				temp = MessageBox( main_wnd_instance, HAVE_NOT_SAVED, 
 				"Fair Play", MB_YESNOCANCEL );
-				DestroyWindow( main_wnd_instance );
+				if( temp == IDYES )
+				{
+					if( dest_filename == 0 )
+					{
+						SendMessage( main_wnd_instance, WM_COMMAND, SAVE_AS_MESSAGE, 0 );
+					}
+					else
+					{
+						SendMessage( main_wnd_instance, WM_COMMAND, SAVE_MESSAGE, 0 );
+					}
+					DestroyWindow( main_wnd_instance );
+				}
+				if( temp == IDNO )
+				{
+					DestroyWindow( main_wnd_instance );
+				}
+				if( temp == IDCANCEL )
+				{
+					break;
+				}
 			}
 			else
 			{
@@ -353,49 +412,94 @@ LRESULT CALLBACK main_procedure( HWND main_wnd_instance, UINT msg, WPARAM param_
 						"Fair Play", MB_YESNOCANCEL );
 					}
 					//If user wants to save current file, send appropriate message.
-					if( temp==IDYES )
+					if( temp == IDYES )
 					{
 						SendMessage( main_wnd_instance, WM_COMMAND, SAVE_MESSAGE, 0 );
 					}
 					if( temp == IDNO )
 					{
-						discard=true;
+						discard = true;
+					}
+					if( temp == IDCANCEL )
+					{
+						break;
 					}
 					if( has_saved || discard || !has_opened )
 					{
 						//Use explorer to get open filename.
 						source_filename = get_file_path( main_wnd_instance, true );
-						//Grab text in specified file.
-						if( get_precipher() )
+						//If 0, then error or user cancel
+						if( source_filename != 0 )
 						{
-							//Plop it in pre-cipher text box.
-							SetWindowText( GetDlgItem( main_wnd_instance,
-							CHILD_ORIGINAL ), precipher );
+							//Grab text in specified file.
+							if( get_precipher() )
+							{
+								//Plop it in pre-cipher text box.
+								SetWindowText( GetDlgItem( main_wnd_instance,
+								CHILD_ORIGINAL ), precipher );
+								options_win validator( mode, keyword, precipher, ignore, strlen( precipher ) );
+								if( !validator.bad )
+								{
+									playfair_win convert( validator );
+									convert.execute();
+									SetWindowText( GetDlgItem( main_wnd_instance, CHILD_PREVIEW ), convert.postcipher );
+								}
+								else
+								{
+									SetWindowText( GetDlgItem( main_wnd_instance, CHILD_PREVIEW ), "Your current cipher settings are incompatible with this file." );
+								}
+							}
+							//A successful opening of a new file means new save path.
+							delete[] dest_filename;
+							dest_filename = 0;
+							delete[] source_filename;
+							source_filename = 0;
+							delete[] precipher;
+							precipher = 0;
+							has_opened = true;
+							has_saved=discard=false;
 						}
-						delete[] source_filename;
-						source_filename = 0;
-						delete[] precipher;
-						precipher = 0;
-						has_opened = true;
-						has_saved=discard=false;
 					}
 				}
 				break;
 				//Save submenu pressed.
 				case SAVE_MESSAGE:
 				{
-					if( !has_saved )
+					if( dest_filename == 0 )
 					{
 						PostMessage( main_wnd_instance, WM_COMMAND, SAVE_AS_MESSAGE, 0 );
+					}
+					else
+					{
+						if( write_file( main_wnd_instance ) )
+						{
+							has_saved = true;
+						}
+						else
+						{
+							//Error
+						}
 					}
 				}
 				break;
 				//Save as submenu pressed.
 				case SAVE_AS_MESSAGE:
 				{
-					char * path = get_file_path( main_wnd_instance, false );
-					cout << path;
-					delete[] path;
+					char * temp_dest;
+					//Come back here and fix this!
+					temp_dest = get_file_path( main_wnd_instance, false );
+					if( temp_dest != 0 )
+					{
+						dest_filename = temp_dest;
+						if( write_file( main_wnd_instance ) )
+						{
+							has_saved = true;
+						}
+						else
+						{
+							//Error
+						}
+					}
 				}
 				break;
 				case CONFIG_CIPHER_MESSAGE:
