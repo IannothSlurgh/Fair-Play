@@ -106,8 +106,8 @@ playfair_win::playfair_win( options_win & o )
 		}
 		precipher = o.file;
 		size = o.file_size;
-		processed.reserve( ( size / 2 ) );
-		if( processed.capacity() != ( size / 2 ) )
+		processed.reserve( ( size / 2 ) + 1 );
+		if( processed.capacity() != ( size / 2 ) + 1 )
 		{
 			alloc=false;
 		}
