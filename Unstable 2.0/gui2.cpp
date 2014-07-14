@@ -174,52 +174,15 @@ char * settings_possible_keyword( HWND settings_instance )
 
 void settings_error( HWND caller, int state )
 {
-	//Eliminate all but duplicate bits, shift to simplify, add 64 to make capital letter.
-	char duplicate_letter = ( ( state & DUPLICATE_ERROR_FIELD ) >> MISSING_FIELD_BITS ) + 64;
-	string str_duplicate_letter(1, duplicate_letter);
-	string duplicate_error = "Your keyword contains more than one " + str_duplicate_letter + 
-		". Your keyword must contain unique letters. Your options could not be applied.";
-	//Prioritize keyword error messages over ignore messages.
-	if( ( state & MISSING_KEYWORD ) == MISSING_KEYWORD )
-	{
-		MessageBox( caller, MISSING_KEYWORD_ERR, "Settings Error", MB_OK );
-	}
-	else
-	{
-		if( ( state & NONALPHA_KEYWORD ) == NONALPHA_KEYWORD )
-		{
-			MessageBox( caller, NONALPHA_KEYWORD_ERR, "Settings Error", MB_OK );
-		}
-		else
-		{
-			//Check for duplicate letters.
-			if( duplicate_letter >= 65 && duplicate_letter <= 90 )
-			{
-				MessageBox( caller, duplicate_error.c_str(), "Settings Error", MB_OK );
-			}
-			else
-			{
-				if( ( state & MISSING_IGNORE ) == MISSING_IGNORE || ( state & NONALPHA_IGNORE ) == NONALPHA_IGNORE )
-				{
-					MessageBox( caller, MISSING_IGNORE_ERR, "Settings Error", MB_OK );
-				}
-				else
-				{
-					if( ( state & IGNORE_IN_KEYWORD ) == IGNORE_IN_KEYWORD )
-					{
-						MessageBox( caller, IGNORE_IN_KEYWORD_ERR, "Settings Error", MB_OK );
-					}
-					else
-					{
-						if( ( state & IGNORE_IN_FILE ) == IGNORE_IN_FILE )
-						{
-							MessageBox( caller, IGNORE_IN_FILE_ERR, "Settings Error", MB_OK );
-						}
-					}
-				}
-			}
-		}
-	}
+	//if( state & MISSING_KEYWORD )
+	//{
+	//	MessageBox( caller, "Error", "Fair Play", MB_YESNOCANCEL );
+	//}
+	stringstream ss;
+	ss << state;
+	string blah;
+	ss >> blah;
+	MessageBox( caller, blah.c_str(), "Fair Play", MB_YESNOCANCEL );
 }
 
 void out_of_memory( HWND caller )
