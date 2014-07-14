@@ -59,9 +59,18 @@ bool options_win::ignore_in_string( char* & c )
 	if( c != 0 )
 	{
 		int len = strlen( c );
+		char ignore_other_case;
+		if( isupper( ignore ) )
+		{
+			ignore_other_case == tolower( ignore );
+		}
+		else
+		{
+			ignore_other_case == toupper( ignore );
+		}
 		for( int i = 0; i<len; ++i )
 		{
-			if( c[ i ] == ignore )
+			if( c[ i ] == ignore || c[ i ] == ignore_other_case )
 				return true;
 		}
 	}
