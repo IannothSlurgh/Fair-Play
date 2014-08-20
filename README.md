@@ -44,7 +44,15 @@ No. No case sensitivity.
 Platform and Compilation Details
 --------------------------------
 
-Fair Play was written in C++ on Windows 7 for Windows XP and above (there is a fair possibility it may work on 2000 also). The current stable version (1.0) has been compiled on the MinGW port of gcc with the following line: 
+Fair Play was written in C++ on Windows 7 for Windows XP and above (there is a fair possibility it may work on 2000 also). The current stable version (2.0) has been compiled on the MinGW port of gcc (its resource manager has been used also) with the following lines: 
+
+windres resource.rc resource.o
+
+g++ main.cpp gui2.cpp playfair_win.cpp options_win.cpp cipher.cpp encoder.cpp decoder.cpp digraph.cpp resource.o -mwindows -O3 -o fairplay.exe -static-libstdc++ -static-libgcc
+
+If possible, exclude the -static-libstdc++ -static-libgcc arguments.
+
+For the old version (1.0), use the following line:
 
 g++ main.cpp gui.cpp playfair.cpp options.cpp cipher.cpp encoder.cpp decoder.cpp digraph.cpp
  -mwindows -O3 -o playfair.exe -static-libstdc++ -static-libgcc
@@ -53,13 +61,3 @@ g++ main.cpp gui.cpp playfair.cpp options.cpp cipher.cpp encoder.cpp decoder.cpp
  
  g++ main.cpp gui.cpp playfair.cpp options.cpp cipher.cpp encoder.cpp decoder.cpp digraph.cpp
  -mwindows -O3 -o playfair.exe
- 
-Version 2.0 includes a windows resource file which must be compiled in the gcc resource manager.
-
-For 2.0, use the following lines.
-
-windres resource.rc resource.o
-
-g++ main.cpp gui2.cpp playfair_win.cpp options_win.cpp cipher.cpp encoder.cpp decoder.cpp digraph.cpp resource.o -mwindows -O3 -o fairplay.exe -static-libstdc++ -static-libgcc
-
-If possible, exclude the -static-libstdc++ -static-libgcc arguments.
